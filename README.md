@@ -515,3 +515,82 @@
          console.log(g.next()); // { done: false, value: 3}
       
       ```
+
+- 第8章  对象，类，面向对象编程
+- 对象：一组属性的无序集合 创建对象的两种方式let q =  new Object() q.xxx = yyy; let q = {xxx:yyy}
+    - 属性的类型 将某个特性标识为内部特性 我们这样写 [[Enumerable]]
+        - 数据属性 包含一个保存数据值的位置，值会从这个位置上读取，也会写入到这个位置，数据属性有4个特性描述它们的行为
+            [[Configurable]]:属性是否可以通过delete删除并重新定义，是否可以修改它的特性，以及是否可以把它改为访问器属性 (true)
+            [[Enumerable]]:属性是否可以通过for-in 循环返回 (true)
+            [[Writable]]:属性的值是否可以被修改 (true)
+            [[Value]]:包含属性实际的值 (undefined)
+        ```javascript
+         let person = {};
+         // 给对象定义属性 Object.defineProperty(obj,attr,'特性对象')  在使用这个方法 最后的特性如果不传的话 默认是false
+         Object.defineProperty(person,"name",{writable:false,value:555});
+        ```
+        - 访问器属性 它不包含数据值，它们包含一个获取(getter)函数和一个设置(setter)函数，但是它们不是必须的。在读取访问器属性的时候
+            会调用获取函数，它的责任就是返回一个有效的值，在写入访问器属性的时候，会调用设置属性并传入新值，这个函数必须对数据做出什么
+            修改 访问器属性有4个特性描述他们的行为  它不能直接定义 需要调用  Object.defineProperty()  指定以获取说明属性是只读
+            [[Configurable]]:属性是否可以通过delete删除并重新定义，是否可以修改它的特性，以及是否可以把它改为数据属性 (true)
+            [[Enumerable]]:属性是否可以通过for-in 循环返回 (true)
+            [[Get]]:获取函数，在读取函数是调用 默认值是undefined
+            [[Set]]:设置函数，在写入函数是调用 默认值是undefined
+        ```javascript
+           // 类似的定义方式
+           Object.defineProperty({},'year',{
+                  get(){return this.year;},
+                  set(newValue){
+                      if(newValue > 2000){this.year = newValue; }
+                  }
+           })
+           // 如果需要定义多个属性
+          let person2 = {};
+          Object.defineProperties(person2,{
+              name:{value:'ez',enumerable:true,configurable:true},
+              age:{get() {return 555;},set(v) {this.age = v;},enumerable:true,configurable:true},
+           })
+        ```
+        - 读取属性属性的特性
+            Object.getOwnPropertyDescriptor('对象',属性)  返回的是一个对象，里面是属性的特性描述符
+            Object.getOwnPropertyDescriptors('对象') 返回的是一个数组 里面包含多个上面方法的调用值
+        - 合并对象  Object.assign() 将源对象上课枚举和自由的属性复制到目标对象上  使用源对象上的[[get]]取得属性的值，然后使用
+            目标对象上的[[set]]设置属性的值
+        ```javascript
+          let dest = {};
+          let src = {id:'src'};
+          let result = Object.assign(dest,src);
+          console.log(dest === result) // 这个结果是true
+          // 后面可以添加多个对象
+          result = Object.assign(dest,{a:1},{b:2})
+          // 说明两个问题，1 不停的调用set方法  2 针对重复的属性 后面的会覆盖前面的属性
+          dest = { 
+           set id(x) { 
+               console.log(x); 
+           } 
+          };
+          Object.assign(dest, { id: 'first' }, { id: 'second' }, { id: 'third' }); 
+          // first 
+          // second 
+          // third 
+        ```
+        - 判断两个值是否相等
+            NaN === NaN   false 
+            +0 === -0 === 0  true   
+            Object.is(NaN,NaN)  true
+            Object.is(+0,0)  true  剩下的情况都是false
+        - 增强属性
+            let name = 1;let obj={name};  // 属性值的简写
+            let xx = function(){xxx} let obj2 = {[xx]:xxx} // 可计算属性  实例化的时候才求值
+            let obj = {set(){}}   // 函数的简写
+        - 对象解构
+            let person = {name:1,age:2}; let {name,age} = person;  如果解构的值不存在的话 undefined
+            let {name,job="hello"} = person;
+            解构在内部使用ToObject()把源数据解构转换为对象 意味着原始值会被当做对象 所以下面的很合理
+            let {length} = "hello"    // 5
+            嵌套解构
+            let person = {name:1,age:2};
+            let person_copy = {};
+            ({name:person_copy.name,age:person_copy.age} = person) 
+                      
+    - 创建对象
