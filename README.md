@@ -594,3 +594,99 @@
             ({name:person_copy.name,age:person_copy.age} = person) 
                       
     - 创建对象
+    ```javascript
+          // 工厂模式是一种众所周知的设计模式   用于抽象创建特性对象的过程  每调用一次方法都会返回一个对象
+          function createPerson(name,age,job){
+              let o = new Object();
+              o.name = name;
+              o.age = age;
+              o.job = job;
+              return o;
+          }
+          // 使用钩子函数创建对象 没有显示的创建对象  属性和方法直接赋值给了this 没有return 
+          function Person(name,age,job){
+              this.name = name;
+              this.age = age;
+              this.job = job;
+              this.sayName = function(){ console.log(this.name);}
+          }
+          let person1 = new Person("hello1",23,"召唤师");
+          let person2 = new Person("hello2",23,"召唤师");
+          // 用new的方式创建对象   
+          // 在内存中创建一个新对象， 这个新对象内部[[Prototype]] 特性被赋值为构造函数的prototype属性
+          // 构造函数内部的this被赋值为这个新对象 执行构造函数内部的代码 (给新对象添加属性)
+          console.log(person1.constructor == Person); // true
+          console.log(person2.constructor == Person); // true
+          // constructor 是用来标识对象类型的    
+          console.log(person1 instanceof Object);
+          console.log(person1 instanceof Person);
+          // 构造函数与普通函数唯一的区别就是调用方式的不同 之外  构造函数也是函数
+          // 原型模式
+          function Person1(){}
+          Person1.prototype.name = "hello";
+          Person1.prototype.age = 45;
+          
+          // 重点来了
+          // 只要创建一个函数，就会按照某种特定的规则为这个函数创建一个prototype属性(指向原型对象) 默认情况下 原型对象会自动
+          //      获取一个名为 constructor的属性 指回与之关联的钩子函数  
+          console.log(Person.prototype.constructor === Person); // true
+          
+          console.log(Person.prototype); // 因为脚本中没有 [[prototype]] 特性的标准方法 等价于下面的__proto__
+          // { 
+          // constructor: f Person(), 
+          // __proto__: Object  访问对象的原型
+          // }
+          console.log(Person.prototype.constructor === Person); // true
+          // Person.prototype 指向它的原型对象  通过__proto__ 访问的就是Object的原型对象 Object.prototype  
+          console.log(Person.prototype.__proto__ ===  Object.prototype);
+          console.log(Person.prototype.__proto__.constructor === Object);
+          console.log(Person.prototype.__proto__.__proto__ === null);  // Object原型的原型是null
+          // 实例通过__proto__ 链接到原型对象  实例于构造函数没有直接联系  和原型对象有直接联系
+          console.log(person1.__proto__ === Person.prototype); // true  
+          console.log(person1.__proto__.constructor === Person);   // true
+          // 同一个构造函数创建的两个实例 共享同一个原型对象
+          console.log(person1.__proto__ === person2.__proto__);
+          
+          // 原型层级
+          // 现在实例对象上找属性  找到返回 找不到 接着去原型对象上去找   只要给对象实例添加一个属性  这个属性就会遮蔽原型对象上
+          //      的同名属性  即使把这个值设置为null 也不会恢复与原型链之间的联系 除非使用 delete 删除实例上这个属性
+          
+          // xxx.hasOwnProperty() 用于确定某个属性是在实例上还是在原型对象上
+          console.log(person1.hasOwnProperty("name")); // false  通过原型链定义的
+          person2.work = '124';
+          console.log(person2.hasOwnProperty("work")); // true   实例上直接定义的
+          // 原型和in操作符号
+          // 单独使用的时候  in 操作符会在可以通过对象访问指定属性时返回true 也就是说 实例或者原型对象上有该属性
+          console.log("name" in person1); // true
+          // 判断某个属性是否在原型上  实例上没有该属性  但是 in 返回的true
+          console.log(!person1.hasOwnProperty("name") && ("name" in person1));   
+          
+          // for-in 循环中使用in操作符 可以通过对象访问并且可以被枚举的属性都会返回。
+          
+          // 获取对象上所有可枚举的实例属性 可以使用Object.keys()  返回可枚举属性名称的数组
+          // 想要列出所有实例属性 无论是否可以枚举  Object.getOwnPropertyNames();
+          // 针对符号的 Object.getOwnPropertySymbols()
+          // for-in  Object.keys() 枚举的顺序不确定  Object.getOwnPropertyNames() Object.getOwnPropertySymbols()
+          //   Object.assign() 先以升序枚举数值键，然后以插入顺序枚举字符串和符号键。在对象字面量中 定义的键以它们逗号分隔的顺序插入
+            
+          // 符号属性会被忽略的哦  Object.values()  Object.entries()
+          const o = {foo:'bar',baz:1,qux:{}};
+          console.log(Object.values(o)); //  ["bar", 1, {}] 
+          console.log(Object.entries((o))); // [["foo", "bar"], ["baz", 1], ["qux", {}]]
+          
+          // 在之前学习中有说道这个  想下面的操作 会把constructor属性忽略掉 这样和默认的设定就不一致了
+          // 如果在里面直接定义 constructor:Person  同样有一个问题就是 它的属性你默认是 enumerable = true
+          //  所以还是需要通过Object.defineProperty() 这样的方式定义  好麻烦
+          Person.prototype = {name:22};
+  
+          // 通过原生对象的原型可以取得所有默认方法的引用  这个的意思就是可以通过 实例对象调用它原型对象的方法 
+          console.log(typeof Array.prototype.sort); // "function" 
+          console.log(typeof String.prototype.substring); // "function" 
+          // 原型最大的问题 书中说 就是共享初始化的属性  虽然可以通过遮蔽解决  最头疼的是属性里面有对象
+          
+    ```  
+    ![重写原型对象报错了](./images/重写原型对象.png)
+    
+    - 原型链
+        
+    
