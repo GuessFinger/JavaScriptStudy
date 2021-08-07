@@ -688,5 +688,360 @@
     ![重写原型对象报错了](./images/重写原型对象.png)
     
     - 原型链
+    ```javascript
+       // 父类
+       function SuperType(){
+          this.property = true;
+       }
+       SuperType.prototype.getSuperValue = function(){return this.property;}
+       // 子类
+       function SubType(){ this.subProperty = false;}
+       // 继承SuperType
+       SubType.prototype = new SuperType();
+       SubType.prototype.getSubValue = function(){return this.subProperty;}
+       let instance = new SubType();
+       console.log(instance.getSuperValue()) // true
+       // SubType没有使用默认的原型，而是替换成一个新的对象，也就是SuperType的实例  instance 通过__proto__ 指向 subType.prototype
+       // 而  subType.prototype.__proto__ 又指向  SuperType.prototype  需要主要的是  
+    ```
+    ![继承图形说明](./images/继承图形说明.png)
+    ---
+    - 默认原型
+        - 原型链中还有一环，默认情况下，所有引用类型都继承自Object,这个也是通过原型链实现的。这也是实例内部有一个内部指针指向Object.prototype
+            这也是自定义类为什么有  toString()   valueOf() 在内的所以默认方法的原因
+        console.log(instance instanceof Object);
+        console.log(instance instanceof SuperType);
+        console.log(instance instanceof SubType);
+        console.log(Object.prototype.isPrototypeOf(instance));
+        console.log(SuperType.prototype.isPrototypeOf(instance));
+        console.log(SubType.prototype.isPrototypeOf(instance));
+        - 原型链的问题  主要的问题是 如果父类的有一个属性是对象，某个子实例改变了这个对象的值，其他新创建的对象会拥有改变后的值
+    - 盗用构造函数
+        ```javascript
+         function SuperType(){this.colors = [1,2,3];}
+         function SubType(){SuperType.call(this)}
+         let instance = new SubType();
+         // 通过使用call() apply() 方法  相当于新的SubType对象运行了 SuperType 函数中所有初始化代码  每个实例都有自己的colors属性
+    - 组合继承
+        ```javascript
+          function SuperType(name){ 
+           this.name = name; 
+           this.colors = ["red", "blue", "green"]; 
+          } 
+          SuperType.prototype.sayName = function() { 
+           console.log(this.name); 
+          }; 
+          function SubType(name, age){ 
+           // 继承属性
+           SuperType.call(this, name); 
+           this.age = age; 
+          } 
+          // 继承方法
+          SubType.prototype = new SuperType(); 
+          SubType.prototype.sayAge = function() { 
+           console.log(this.age); 
+          }; 
+          let instance1 = new SubType("Nicholas", 29); 
+          instance1.colors.push("black"); 
+          console.log(instance1.colors); // "red,blue,green,black" 
+          instance1.sayName(); // "Nicholas"; 
+          instance1.sayAge(); // 29 
+          let instance2 = new SubType("Greg", 27); 
+          console.log(instance2.colors); // "red,blue,green" 
+          instance2.sayName(); // "Greg"; 
+          instance2.sayAge(); // 27 
+      
+        ```
+    - 类
+        -类声明
+        ```javascript
+           // 类声明  声明的类 首字母需要大写
+           class Person{}
+           // 表达式声明
+           const Animal = class {};
+           class Foo{
+              // 构造函数
+              constructor(){}
+              // 获取函数
+              get xxx(){}
+              // 静态方法
+              static myY(){}
+           }
+        ```
+        - 类构造函数
+            - constructor 关键字用于在类定义块内部创建类的构造函数，方法名constructor会告诉解释器在使用new操作符号创建类的
+                新实例的时候 应该调用这个函数  可以为空 使用new操作构造函数会执行下面的操作
+                1. 在内存中创建一个新的对象
+                2. 在这个新的对象内部__proto__ 指针指向 构造函数的prototype属性
+                3. 构造函数内部的this被赋值为这个新的对象  this指向这个对象
+                4. 执行构造函数内部的代码  给新的对象添加属性
+                5. 如果构造函数返回非空对象 则返回该对象 否则返回新创建的对象
+                类构造函数与构造函数的主要区别：调用类构造函数必须使用new操作符 普通构造函数如果不使用new调用 那么就会以全局this 
+                    作为内部对象
+                Class Person{}
+                let p1 = new Person();
+                let p2 = new  p1.constructor();  不使用关键字new的时候会报错
+            - 原型方法与访问器 为了在实例间共享方法，类定义语法把类块中定义的方法作为原型方法
+                class Person{
+                    constructor(){
+                        添加到this上的所有内容会存在不同的实例上
+                        this.locate = () =>  console.log(123)
+                    }
+                        在类块中定义的所有内容都会定义在类的原型上  注意这里说的是所有内容 
+                    locate(){console.log('prototype')}
+                }
+                可以把方法定义在类构造函数或者类块中 但是不能再类块中给原型添加原始值或者对象作为成员数据
+                class Person{name:123}  这样是错误的  
+                类中的方法等同于对象的属性
+            - 静态方法  这个和java一样  直接用类名进行调用
+                class Person{
+                    constructor(){
+                        this.locate = () => console.log('instance',this);
+                    }
+                    locate(){
+                        console.log('prototype',this)
+                    }
+                    static locate(){
+                        console.log('class',this)
+                    }
+                }
+                let p = new Person()
+                p.locate(); // instance, Person {} 
+                Person.prototype.locate(); // prototype, {constructor: ... } 
+                Person.locate(); // class, class Person {}
+        - 类的继承
+            - es6支持单继承，使用关键字extends  
+            ```javascript
+              class Vehicle{}
+              class Bus extends Vehicle{};
+              let bus = new Bus()
+              console.log(bus instanceof Vehicle);    
+              console.log(bus instanceof Bus);
+              // 同样也可以继承 普通的构造函数
+              // 派生类的方法可以通过super关键字引用它们的原型  这个关键字只能在派生类中使用 仅限于类的构造函数，
+              //      实例方法和静态方法中使用 
+            ```
+                
+   - 代理和反射 根据之前的理解 就是在对对象操作之前，可以把这个对象进行预处理
+        - 创建空代理
+        ```javascript
+           const target = {id:'target'};
+           const handler = {}
+           // 使用proxy构造函数创建  接受两个参数  目标对象和处理程序对象
+           const proxy = new Proxy(target,handler);
+           console.log(target.id);
+           console.log(proxy.id);
+           //  改变任何一个实例的id 都会反映到另一个实例上 
+           proxy.id = 'hello world';
+           // Proxy.prototype 是undefined  所以不能使用instanceof 进行操作
+           console.log(target === proxy)   // false 严格区分它们
+        ```
+        - 定义捕获器 给代理上定义一些行为，通过某种方式访问代理对象的属性时候，就会触发这种行为，有点像拦截器
+        ```javascript
+        const target = {id:'hello'};
+        const proxy = new Proxy(target,{
+             get(){
+                 console.log('handle override');
+             }
+         })
+        // 通过代理对象 才可以访问定义的捕获器， 原始对象不受影响   针对代理对象的  proxy[prototype] proxy.prototype 
+        //   Object.create(proxy)[prototype] 都会触发 基本的 get() 操作以获得属性
+        ```
+        -捕获器参数和反射api
+        ```javascript
+        // 素有捕获器都可以访问相应的参数 根据这些参数可以重建被捕获的方法的原始行为
+        const target = {id :2}
+        const proxy = new Proxy(target,{
+             get(trapTarget, p, receiver) {
+                 console.log(target === trapTarget); // true
+                 console.log(p); // 这个就是属性
+                 console.log(receiver === proxy) // 表示的就是代理对象
+             }
+         })
+        // 如果所有捕获的对象的基本方法都要自己手动的去处理 就非常的麻烦  每个处理程序对象中所有可以捕获的方法都有对应的反射API
+        const target1 = {id :2};
+        const proxy1 = new Proxy(target1,{
+             get(){
+                 return Reflect.get(...arguments);
+             }
+         });
+        // 如果需要将所有的方法都交给reflect的话  
+        const proxy2 = new Proxy(target,Reflect);
+        // 还可以这样处理
+        const proxy3 = new Proxy(target,{
+             get(trapTarget, p, receiver) {
+                 let x = "12";
+                 if(p === 'f'){x = 456}
+                 return Reflect.get(...arguments) + x;
+             }
+         })
+         
+         // 捕获器不变式  大概的意思就是虽然你可以改变所有的默认行文 但是你不能返回一个和原来行为截然不同的处理方式
+         const target3 = {}; 
+         Object.defineProperty(target3, 'foo', { 
+          configurable: false, 
+          writable: false, 
+          value: 'bar' 
+         }); 
+         const handler = { 
+          get() { 
+          return 'qux'; 
+          } 
+         }; 
+         const proxy5 = new Proxy(target3, handler); 
+         console.log(proxy5.foo);     // TypeError 
+         // 撤销代理 Proxy.revocable(target,handler)
+        ```
+        - 实用反射API  反射的很多API直接就是Object上的方法
+            - 标记状态  用Object进行某种操作会报错，使用Reflect操作的话会返回标记状态  表示是否操作成功
+            const o = {};
+            if(Reflect.defineProperty(o,'foo',{value:2})){console.log('success')}else{console.log('error')}
+            下面的所有的方法都是有返回标记的
+             Reflect.defineProperty()
+             Reflect.preventExtensions()
+             Reflect.setPrototypeOf()
+             Reflect.set()
+             Reflect.deleteProperty()
+            根据上面的描述  那么代理就可以代理另一个代理
+        - 代理的问题和不足
+        - 捕获器中的方法
+            get/set
+            拦截的操作
+            proxy.property  proxy[property]  Object.create(proxy)[property] Reflect.get(proxy,property,receiver)
+            捕获器处理程序参数
+            target目标对象  property 引用的目标对象上的字符串键属性  receiver 代理对象或集成代理对象的对象
+            捕获器不变式
+            target.property 不可写且不可配置 则处理程序返回的值必须和target.property匹配
+            target.property 不可配置且[[Get]]特性为undefined 处理程序的返回值也必须是undefined
+            has
+            拦截的操作
+            property in proxy; property in Object.create(proxy); Reflect.has(proxy,property)
+            捕获器不变式
+            target.property 存在且不可配置 则处理程序必须返回true
+            target.property 存在且目标对象不可配置 则处理程序必须返回true
+            defineProperty  还有一些其他的操作，这里就不进行记录了
+        - 代理模式  可以在代码中时效内一些有用的编程模式
+            - 跟踪属性访问  对象的属性什么时候可以被访问，被查询 通过代理都可以被访问到  都可以被记录到
+            - 隐藏属性  在访问属性的时候  如果这个属性在你需要隐藏的列表里面  进行另一种处理
+            - 属性验证  所有的赋值操作都会触发set()  当属性值不是你要的属性值的时候  也进行另一种操作就可以了
+            - 函数与构造函数参数验证  在调用用construct的时候对参数进行校验
+            - 跟业务逻辑相绑定，在你需要拦截的地方添加上你需要进行的操作
+   - 函数
+    function sum(num1,num2){return num1+num2;}   这里是没有分号的
+    let sum = function(num1,num2){return num1 + num2;};  这里是有分号的
+    箭头函数对染语法简介，但是有很多的场景不适合，箭头函数不能使用arguments,super
+    let sum = (num1,num2) => {return num1 + num2}
+    - 函数名
+        因为函数名就是指向函数的指针 一个函数可以有多个名称
+        let anotherSum = sum;  这里是指针，没有进行函数的调用
+        console.log(anotherSum(10,10));  完全ok  
+         function foo(){}
+         let bar = function(){}
+         let baz = function(){}
+         console.log(foo.name) foo
+         console.log(bar.name) bar
+         console.log(baz.name) baz
+         console.log((() => {}).name)  空字符串
+         console.log((new Function()).name) anonymous
+    - 理解参数
+        js函数即不关心传入的参数个数，也不关心这些参数的数据类型  可以传递两个参数，也可以传递三个参数  为什么可以这样
+            主要是因为函数的参数在内部表现为一个数组  可以在函数内部访问arguments这个对象  可以通过调用arguments.length
+            判断传递了几个参数 还有一个比较有意思的地方就是 如果改变arguments[0]的值 那么传递进来的有标志的参数也会跟着变化
+            如果只传递一个参数，然后把arguments[1]设置为某个值 这个值并不会反映到第二个命名参数上  
+        箭头函数中 我们不能通过arguments进行访问
+        在js中函数是没有重载的  这个一般你在定义相同函数名称的时候 就会有提示的
+        - 默认参数
+          function makeKing(name = '1'){console.log(name)}
+          function makeKING(name = "hello"){
+            name = "world";
+            return "king" + arguments[0]
+          }     
+          console.log(makeKing()); // 'King undefined'  说明修改命名参数不会影响arguments对象
+          console.log(makeKing('Louis')); // 'King Louis'          
+          修正一个观点  参数的默认值不一定要放到参数的最后面 一直有这么一个思想在里面
+    - 拓展参数
+        let array = [1,2,3,4];
+        function(...array){}  等价于  function(a,b,c,d){}
+        像这种拓展参数就需要放到传递参数的最后
+    - 函数声明与函数表达式
+        console.log(sum(1,2));
+        function sum(num1,num2){return num1 + num2;} 
+        上面的代码能够正常执行  因为函数声明会在任何代码执行之前先读取并添加到执行上下文 这个过程叫做函数声明提升。在执行代码之前
+            JavaScript引擎会先执行一遍扫描，把发现的函数声明提升到源代码树的顶部  这个和使用var的场景非常的相似
+        console.log(sum(1,2));
+        var sum = function(num1,num2){return num1 + num2;}
+    - 函数内部
+        - arguments  多了一个属性 callee属性 指向arguments对象所在函数的指针
+            function factorial(num){
+                if(num <= 1) {return 1}
+                else {return num * factorial(num -1)}
+            }
+            阶乘的方法虽然可以调用 但是里面的方法依托方法名称 factorial  如果函数改名了 就会有问题 不过在实际的开发中 好像也不是很关键
+            这样计算函数改名了 这个方法依旧可以正常使用
+            function factorial(num){
+                if(num <= 1) {return 1}
+                else {return num * arguments.callee(num -1)}
+            }
+            像最上面的 就属于硬编码了
+        - this
+            在标准函数中，this到底引用哪个对象，必须要到函数别调用的时候才能确认。 一般理解是指向调用方
+            箭头函数没有自己的this  this引用的是定义箭头函数的上下文
+        - caller 这个属性引用的是调用当前函数的函数
+        - new.target  如果使用new 关键字调用  new.target 将引用被调用的钩子函数  不是的话就是undefined
+    - 函数的属性和方法
+        length保存函数定义的命名参数的个数
+        call() apply() 接受两个参数 函数内this的值和一个参数数组 call() 需要把参数一个一个传递  apply()则直接用数组就可以
+        call()和apply()最强大的地方就是控制函数调用上下文 就是函数体内this的指向
+        window.color = 'red'
+        let o = {color:'yellow'}
+        function sayColor(){console.log(this.color)}
+        sayColor.call(this)  // 全局的window对象
+        sayColor.call(window)
+        sqyColor.call(o) // yellow
+        bind()方法会创建一个新的函数实例 this的值会绑定到传给bind()的对象
+        let objectSayColor = sayColor.bind(o);
+    - 尾调用优化
+        内部函数的返回跟外部函数已经没有什么关系了 就会执行尾调用优化
+    - 闭包 引用了另一个函数作用域中变量的函数，通常在嵌套函数中实现。
+        ```javascript
+          function createComparisonFunction(propertyName) { 
+           return function(object1, object2) { 
+               // 内部的函数  还可以引用外部函数的变量  propertyName
+               let value1 = object1[propertyName]; 
+               let value2 = object2[propertyName]; 
+               if (value1 < value2) { 
+                   return -1; 
+               } else if (value1 > value2) { 
+                  return 1; 
+               } else { 
+                   return 0; 
+               } 
+            }; 
+          } 
+          // 
+       ```
         
+        
+            
+           
+           
+        
+                   
+      
+            
+            
     
+    
+    
+            
+            
+            
+                           
+                
+                
+                    
+               
+                
+        
+        
+        
