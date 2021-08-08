@@ -1020,10 +1020,45 @@
           } 
           // 
        ```
+    - 契约(promise)于异步函数(async)
+        promise 是一个有状态的对象 pending 待定  fulfilled 兑现  rejected 拒绝
         
         
-            
-           
+    - BOM 浏览器对象模型 browser Object Model
+        - window对象  BOM的核心是window对象，表示浏览器的实例，window对象在浏览器中有两重身份，一个是Global对象，另一个就是
+            浏览器窗口的JavaScript接口
+            - Global作用域
+            ```javascript
+              // 通过var声明的所有全局变量和函数都会变成window对象的属性和方法
+              var age = 20;
+              console.log(window.age);
+              // 之前也说过  使用var会把变量添加到 全局对象上 使用let const则不会
+          
+            ```
+            - 像素比 低分辨率平板设备上 12 像素（CSS 像素）的文字应该与高清 4K 屏幕下  12 像素（CSS 像素）的文字具有相同大小。
+                这就带来了一个问题，不同像素密度的屏幕下就会有不同的 缩放系数，以便把物理像素（屏幕实际的分辨率）
+                转换为 CSS 像素（浏览器报告的虚拟分辨率）
+                总体来说，就是为了让再不同分辨率下 同一个字体显式的大小是一样的
+                window.devicePixelRatio            
+                DPI dots per inch 每英寸像素数   
+            - 窗口大小 现代所有的浏览器都支持  innerWidth  innerHeight outerWidth  outerHeight
+                outerWidth outerHeight 返回浏览器窗口自身的大小
+                innerWidth innerHeight 返回浏览器中页面视扣的大小(不包含浏览器边框和工具栏)
+                应该最常用的就是这个
+                document.documentElement.clientWidth document.documentElement.clientHeight 返回页面视口的宽度和高度 
+                    
+                window.scrollBy(0,100) 向下移动100像素
+                window.scrollBy(100,0) 向右移动100像素
+            - 定时器
+                let timeoutId = setTimeout(() => alter('hello world'),1000)
+                clearTimeout(timeoutId)
+            - location  用这个来操作和url相关的属性
+            - navigator 用这个来操作浏览器相关的属性
+            - history对象
+                history.go(-1)  后退一页  history.back()
+                history.go(1)   前进一页  history.forward()
+    -DOM 文档对象模型  表示由多层节点构成的文档，通过它开发者可以添加 删除 修改页面的各个部分。
+                    
            
         
                    
